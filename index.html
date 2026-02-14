@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Date Diary</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <h1>📅 Date Diary</h1>
+        <p>날짜 중심 데이트 일기</p>
+      </header>
+
+      <section id="authPanel" class="auth-panel">
+        <h2>로그인</h2>
+        <p class="auth-help">공유 계정으로 로그인하면 두 사람이 같은 데이터를 함께 사용할 수 있어요.</p>
+        <div class="field-grid">
+          <label>
+            이메일
+            <input id="authEmail" type="email" placeholder="shared@example.com" autocomplete="email" />
+          </label>
+          <label>
+            비밀번호
+            <input id="authPassword" type="password" placeholder="비밀번호" autocomplete="current-password" />
+          </label>
+        </div>
+        <div class="auth-actions">
+          <button id="loginBtn" class="primary" type="button">로그인</button>
+          <button id="signupBtn" class="ghost" type="button">회원가입(최초 1회)</button>
+          <button id="logoutBtn" class="ghost hidden" type="button">로그아웃</button>
+        </div>
+        <p id="authStatus" class="empty-message">로그인이 필요합니다.</p>
+      </section>
+
+      <div id="appContent" class="hidden">
+        <nav class="tabs" aria-label="메인 화면 이동">
+          <button class="tab-btn active" data-tab="timeline">타임라인</button>
+          <button class="tab-btn" data-tab="editor">작성</button>
+          <button class="tab-btn" data-tab="map">지도</button>
+        </nav>
+
+        <main>
+          <section id="timeline" class="tab-panel active">
+            <div class="panel-header">
+              <h2>타임라인</h2>
+              <div class="backup-actions">
+                <button id="migrateBtn" class="ghost hidden">기존 데이터 DB로 가져오기</button>
+                <button id="exportBtn" class="ghost">JSON 내보내기</button>
+                <label class="ghost file-upload-label" for="importFile">JSON 가져오기</label>
+                <input id="importFile" type="file" accept="application/json" />
+              </div>
+            </div>
+
+            <div class="search-row">
+              <input id="searchInput" type="search" placeholder="제목, 태그, 본문, 장소명 검색" />
+            </div>
+
+            <div id="timelineList" class="card-list"></div>
+            <p id="timelineEmpty" class="empty-message hidden">아직 기록이 없어요. 작성 화면에서 첫 데이트 일기를 남겨보세요.</p>
+          </section>
+
+          <section id="editor" class="tab-panel">
+            <h2>작성</h2>
+            <form id="entryForm" class="entry-form">
+              <div class="field-grid">
+                <label>
+                  날짜
+                  <input id="entryDate" type="date" required />
+                </label>
+                <label>
+                  제목
+                  <input id="entryTitle" type="text" maxlength="60" placeholder="예: 한강 피크닉 데이트" required />
+                </label>
+              </div>
+
+              <fieldset>
+                <legend>기분</legend>
+                <div id="moodGroup" class="mood-group"></div>
+              </fieldset>
+
+              <label>
+                태그 (콤마로 구분)
+                <input id="entryTags" type="text" placeholder="예: 산책, 브런치, 기념일" />
+              </label>
+
+              <label>
+                하루 메모
+                <textarea id="entryDiary" rows="4" placeholder="오늘 있었던 일과 감정을 자유롭게 적어보세요."></textarea>
+              </label>
+
+              <section class="places-section">
+                <div class="section-title-row">
+                  <h3>장소 코스</h3>
+                  <button id="addPlaceBtn" type="button">+ 장소 추가</button>
+                </div>
+                <div id="placeList" class="place-list"></div>
+              </section>
+
+              <div class="form-actions">
+                <button id="saveBtn" type="submit" class="primary">저장하기</button>
+                <button id="resetBtn" type="button" class="ghost">새로 쓰기</button>
+              </div>
+            </form>
+          </section>
+
+          <section id="map" class="tab-panel">
+            <div class="panel-header">
+              <h2>지도</h2>
+              <label>
+                날짜 선택
+                <select id="mapEntrySelect"></select>
+              </label>
+            </div>
+            <div id="mapView" class="map-view" aria-label="데이트 코스 지도"></div>
+            <p id="mapHint" class="empty-message">표시할 기록을 선택해 주세요.</p>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <template id="placeItemTemplate">
+      <article class="place-item">
+        <div class="place-header">
+          <h4 class="place-title">장소</h4>
+          <div class="place-controls">
+            <button type="button" class="move-up">↑</button>
+            <button type="button" class="move-down">↓</button>
+            <button type="button" class="delete">삭제</button>
+          </div>
+        </div>
+
+        <div class="field-grid">
+          <label>
+            장소명
+            <input type="text" class="place-name" placeholder="예: 남산타워" required />
+          </label>
+          <label>
+            카테고리
+            <input type="text" class="place-category" placeholder="예: 관광지" />
+          </label>
+          <label>
+            시간
+            <input type="time" class="place-time" />
+          </label>
+          <label>
+            평점 (1~5)
+            <input type="number" class="place-rating" min="1" max="5" value="5" />
+          </label>
+        </div>
+
+        <label>
+          장소 메모
+          <textarea class="place-notes" rows="2" placeholder="기억하고 싶은 포인트"></textarea>
+        </label>
+
+        <div class="address-search">
+          <label>
+            주소 검색 (Nominatim)
+            <input type="text" class="place-address-query" placeholder="예: 서울시 중구 남산공원길 105" />
+          </label>
+          <div class="search-results"></div>
+          <p class="selected-address">선택된 주소: 없음</p>
+        </div>
+      </article>
+    </template>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
